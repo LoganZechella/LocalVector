@@ -6,8 +6,8 @@ WORKDIR /app
 
 # Install system dependencies that might be needed by some python packages
 # (Example: build-essential for packages needing compilation)
-# Add any other required system dependencies here
-# RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
+# Add git for cloning repositories
+RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
 
 # Copy the requirements file into the container
 COPY requirements.txt .

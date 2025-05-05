@@ -448,9 +448,11 @@ class DocumentationCrawler:
         self.start_url = start_url
         self.max_depth = max_depth
         self.rate_limit = rate_limit_seconds
-        self.allowed_domain = urlparse(start_url).netloc
+        parsed_start_url = urlparse(start_url)
+        self.base_domain = parsed_start_url.netloc
+        self.allowed_schemes = {'http', 'https'}
         self.visited_urls: Set[str] = set()
-        logger.info(f"Initialized crawler for {start_url} (domain: {self.allowed_domain}, max_depth: {max_depth})")
+        logger.info(f"Initialized crawler for {start_url} (domain: {self.base_domain}, max_depth: {max_depth})")
 
     def _normalize_url(self, url: str, base_url: str) -> Optional[str]:
         """Normalize URL, ensure it's within the same domain and is HTTP/HTTPS."""
@@ -549,4 +551,92 @@ class DocumentationCrawler:
                         queue.append((link, current_depth + 1))
 
         logger.info(f"Crawl finished. Extracted content from {len(documents)} pages. Visited {len(self.visited_urls)} URLs.")
-        return documents 
+        return documents
+
+# --- New Documentation Site Ingestion Function ---
+def ingest_documentation_site(doc_url: str, max_depth: int = 3, rate_limit: float = 0.5) -> int:
+     """Ingests a documentation site using the DocumentationCrawler."""
+     logger.info(f"Starting documentation site crawl for: {doc_url} (max_depth={max_depth})" )
+     try:
+        crawler = DocumentationCrawler(start_url=doc_url, max_depth=max_depth, rate_limit_seconds=rate_limit)
+        documents = crawler.crawl()
+
+        if not documents:
+            logger.warning(f"No documents crawled from site: {doc_url}")
+            return 0
+
+        logger.info(f"Crawled {len(documents)} pages from {doc_url}. Splitting and adding to DB...")
+
+        # Split Documents
+        split_docs = text_splitter.split_documents(documents)
+        if not split_docs:
+            logger.warning(f"No chunks generated after splitting for site: {doc_url}")
+            return 0
+        logger.info(f"Split into {len(split_docs)} chunks.")
+
+        # Generate IDs and Prepare for Vector Store
+        ids = [_generate_doc_id(doc) for doc in split_docs]
+        texts = [doc.page_content for doc in split_docs]
+        metadatas = [doc.metadata for doc in split_docs]
+        # Add source_type to metadata
+        for meta in metadatas:
+            meta["source_type"] = "docs"
+
+        # Add to Vector Store
+        if texts:
+            logger.info(f"Adding {len(texts)} chunks from {doc_url} to ChromaDB...")
+            vector_db.add_texts(texts=texts, metadatas=metadatas, ids=ids)
+            # vector_db.persist() # Evaluate if needed
+            logger.info(f"Successfully added {len(texts)} chunks from {doc_url}.")
+            return len(texts)
+        else:
+            logger.warning(f"No text content found to add for site: {doc_url}")
+            return 0
+
+     except Exception as e:
+        logger.exception(f"An unexpected error occurred during documentation site ingestion of {doc_url}: {e}")
+        return -1 # Indicate failure
+
+# Example Usage (for testing)
+if __name__ == '__main__':
+    # Test different loaders (assuming test files exist)
+    # test_url = "https://example.com"
+    # test_pdf = "./test_docs/sample.pdf"
+    # test_text = "./test_docs/sample.txt"
+    test_github_repo = "https://github.com/langchain-ai/langchain" # Example repo
+
+    try:
+        # print(f"\n--- Testing URL Loader ({test_url}) ---")
+        # count_url = ingest(test_url, "url")
+        # print(f"URL Ingestion Result: Added {count_url} chunks.")
+
+        # print(f"\n--- Testing PDF Loader ({test_pdf}) ---")
+        # if os.path.exists(test_pdf):
+        #     count_pdf = ingest(test_pdf, "pdf")
+        #     print(f"PDF Ingestion Result: Added {count_pdf} chunks.")
+        # else:
+        #     print(f"PDF file not found: {test_pdf}")
+
+        # print(f"\n--- Testing Text Loader ({test_text}) ---")
+        # if os.path.exists(test_text):
+        #     count_text = ingest(test_text, "text")
+        #     print(f"Text Ingestion Result: Added {count_text} chunks.")
+        # else:
+        #     print(f"Text file not found: {test_text}")
+
+        print(f"\n--- Testing GitHub Repo Ingestion ({test_github_repo}) ---")
+        count_github = ingest_github_repository(test_github_repo, branch="master", keep_repo=False)
+        print(f"GitHub Ingestion Result: Added {count_github} chunks.")
+
+    except Exception as e:
+        print(f"An error occurred during testing: {e}")
+
+    print("\n--- Testing Search ---")
+    try:
+        results = vector_db.similarity_search("what is an agent?", k=3)
+        print("Search results for 'what is an agent?':")
+        for doc in results:
+            print(f"- Source: {doc.metadata.get('source')}, Type: {doc.metadata.get('source_type', 'N/A')}, Chunk: {doc.metadata.get('chunk_index', 'N/A')[:60]}...")
+            # print(f"  Content: {doc.page_content[:150].replace('\n', ' ')}...")
+    except Exception as e:
+        print(f"Error during search test: {e}") 

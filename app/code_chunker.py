@@ -44,10 +44,14 @@ class CodeChunker:
         return chunks
 
     def _create_chunk_metadata(self, file_info: Dict[str, Any], chunk_index: int, start_line: int, end_line: int, chunk_type: str = "generic") -> Dict[str, Any]:
-        """Create metadata for a chunk."""
+        """Create metadata for a chunk, ensuring values are Chroma-compatible."""
+        # Ensure mime_type is a string, defaulting to 'unknown' if None
+        mime_type = file_info.get("mime_type") or "unknown"
+
         return {
             "path": file_info["path"],
-            "mime_type": file_info.get("mime_type"),
+            # "mime_type": file_info.get("mime_type"),
+            "mime_type": mime_type, # Use the sanitized mime_type
             "chunk_index": chunk_index,
             "chunk_type": chunk_type,
             "start_line": start_line,
