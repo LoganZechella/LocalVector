@@ -9,6 +9,8 @@ CHROMA_DB_DIR = os.getenv("CHROMA_DB_DIR", "./chroma_db")
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 1000))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 200))
 API_URL = os.getenv("API_URL", "http://127.0.0.1:8000") # Added for CLI later
+API_TITLE = os.getenv("API_TITLE", "LocalVector API")
+API_VERSION = os.getenv("API_VERSION", "0.1.0")
 
 # Validate essential variables
 if not OPENAI_API_KEY:
