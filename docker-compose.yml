@@ -1,0 +1,32 @@
+version: '3.8' # Specify docker-compose version
+
+services:
+  vector-db-service:
+    build: . # Build the image from the Dockerfile in the current directory
+    container_name: local_vector_db_service
+    ports:
+      - "8000:8000" # Map host port 8000 to container port 8000
+    volumes:
+      # Mount the local chroma_db directory into the container at /app/chroma_db_volume
+      # This ensures persistence of the vector database across container restarts.
+      - ./chroma_db:/app/chroma_db_volume
+    env_file:
+      - .env # Load environment variables from the .env file
+    environment:
+      # Override or set specific environment variables if needed
+      # Ensure the container uses the mounted volume path for Chroma DB
+      - CHROMA_DB_DIR=/app/chroma_db_volume
+      # Ensure the API URL inside the container reflects its accessibility
+      # The API_URL in .env might be http://127.0.0.1:8000, which is fine for the CLI on the host,
+      # but inside the container, it might need 0.0.0.0 if services *within* docker needed to call it.
+      # For simplicity, we rely on the CMD and EXPOSE in Dockerfile for external access.
+    # Optional: Add healthcheck based on the /health endpoint
+    # healthcheck:
+    #   test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+
+# Define the volume for persistence (optional, as we are using bind mount above)
+# volumes:
+#   chroma_data: 
