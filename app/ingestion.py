@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import List
 from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from app.config import CHROMA_DB_DIR, OPENAI_API_KEY, CHUNK_SIZE, CHUNK_OVERLAP
 import requests
 from bs4 import BeautifulSoup

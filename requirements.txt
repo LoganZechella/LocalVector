@@ -10,8 +10,10 @@ build==1.2.2.post1
 cachetools==5.5.2
 certifi==2025.4.26
 charset-normalizer==3.4.2
-chroma-hnswlib==0.7.6
-chromadb==1.0.7
+# chroma-hnswlib==0.7.6 # Unpinning to allow resolution
+chroma-hnswlib
+# chromadb>=0.4.0,<0.5.0 # Unpinning to allow resolution
+chromadb
 click==8.1.8
 coloredlogs==15.0.1
 Deprecated==1.2.18
@@ -40,9 +42,12 @@ jsonschema==4.23.0
 jsonschema-specifications==2025.4.1
 kubernetes==32.0.1
 langchain==0.3.25
-langchain-core==0.3.58
-langchain-openai==0.3.16
-langchain-text-splitters==0.3.8
+# langchain-chroma~=0.1.0 # Unpinning to allow resolution
+langchain-chroma
+langchain-community
+langchain-core
+langchain-openai
+langchain-text-splitters
 langsmith==0.3.42
 markdown-it-py==3.0.0
 mdurl==0.1.2
@@ -69,8 +74,8 @@ posthog==4.0.1
 protobuf==5.29.4
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
-pydantic==2.11.4
-pydantic_core==2.33.2
+pydantic
+pydantic_core
 Pygments==2.19.1
 pypdf==5.4.0
 PyPika==0.48.9
